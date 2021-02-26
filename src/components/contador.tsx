@@ -1,29 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import ms from 'ms';
+import React, { useContext } from 'react';
+import { ContadorContext } from '../contexts/contador-context';
 
 import styles from '../styles/components/contador.module.css';
 
-const Contador: React.FC = () => {
-  const [time, setTime] = useState(ms('25m'));
-  const [isActive, setIsActive] = useState(false);
+export const Contador: React.FC = () => {
+  const {
+    minutes,
+    seconds,
+    hasFinished,
+    isActive,
+    resetCounter,
+    startCount,
+  } = useContext(ContadorContext);
 
-  const m = Math.floor(time / 60);
-  const s = time % 60;
-
-  const [leftMinute, rightMinute] = String(m).padStart(2, '0').split('');
-  const [leftSecond, rightSecond] = String(s).padStart(2, '0').split('');
-
-  const startCount = () => {
-    setIsActive(true);
-  };
-
-  useEffect(() => {
-    if (isActive && time) {
-      setTimeout(() => {
-        setTime(time - 1);
-      }, ms('1s'));
-    }
-  }, [isActive, time]);
+  const [leftMinute, rightMinute] = String(minutes).padStart(2, '0').split('');
+  const [leftSecond, rightSecond] = String(seconds).padStart(2, '0').split('');
 
   return (
     <div>
@@ -38,15 +29,31 @@ const Contador: React.FC = () => {
           <span>{rightSecond}</span>
         </div>
       </div>
-      <button
-        onClick={startCount}
-        type="button"
-        className={styles.botaoContador}
-      >
-        Iniciar um ciclo
-      </button>
+      {hasFinished ? (
+        <button disabled className={styles.botaoContador}>
+          Ciclo Encerrado
+        </button>
+      ) : (
+        <React.Fragment>
+          {isActive ? (
+            <button
+              onClick={resetCounter}
+              type="button"
+              className={`${styles.botaoContador} ${styles.botaoContadorAtivo}`}
+            >
+              Abanconar Ciclo
+            </button>
+          ) : (
+            <button
+              onClick={startCount}
+              type="button"
+              className={styles.botaoContador}
+            >
+              Iniciar Ciclo
+            </button>
+          )}
+        </React.Fragment>
+      )}
     </div>
   );
 };
-
-export default Contador;
