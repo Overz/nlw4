@@ -9,7 +9,7 @@ import { ChallangesContext } from './challange-context';
 import ms from 'ms';
 import { required } from '../utils/constants';
 
-export interface ContadorContexData {
+interface ContadorContexData {
   isActive: boolean;
   hasFinished: boolean;
   minutes: number;

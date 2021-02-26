@@ -1,15 +1,23 @@
 import React, { createContext, ReactNode, useEffect, useState } from 'react';
 import challanges from '../../challanges.json';
+import { set as save } from 'js-cookie';
+import { Cookies } from '../utils/types';
 
+import { LevelUpModal } from '../components/level-up-modal';
 interface Challange {
   type: 'body' | 'eye';
   description: string;
   amount: number;
 }
 
-export interface ChallangeContextData {
+interface ChallangesProviderProps {
+  children: ReactNode;
+  cookies: Cookies;
+}
+
+interface ChallangeContextData {
   level: number;
-  xp: number;
+  currentExperience: number;
   xpToNextLevel: number;
   challangesCompleted: number;
   activeChallange: Challange;
@@ -17,15 +25,22 @@ export interface ChallangeContextData {
   startNewChallange: () => void;
   resetChallange: () => void;
   completeChallange: () => void;
+  closeModal: () => void;
 }
 
 export const ChallangesContext = createContext({} as ChallangeContextData);
 
-export const ChallangesProvider: React.FC<ReactNode> = ({ children }) => {
-  const [level, setLevel] = useState(1);
-  const [xp, setXp] = useState(0);
-  const [challangesCompleted, setChallangesCompletes] = useState(0);
+export const ChallangesProvider: React.FC<ChallangesProviderProps> = ({
+  children,
+  cookies,
+}) => {
+  const [level, setLevel] = useState(cookies.level || 1);
+  const [currentExperience, setXp] = useState(cookies.currentExperience || 0);
+  const [challangesCompleted, setChallangesCompletes] = useState(
+    cookies.challangesCompleted || 0
+  );
   const [activeChallange, setActiveChallange] = useState<Challange>(null);
+  const [isModalOpen, setIsModalUp] = useState(false);
 
   const xpToNextLevel = Math.pow((level + 1) * 4, 2);
 
@@ -33,8 +48,15 @@ export const ChallangesProvider: React.FC<ReactNode> = ({ children }) => {
     Notification.requestPermission();
   }, []);
 
+  useEffect(() => {
+    save('level', String(level));
+    save('currentExperience', String(currentExperience));
+    save('challangesCompleted', String(challangesCompleted));
+  }, [level, currentExperience, challangesCompleted]);
+
   const levelUp = () => {
     setLevel(level + 1);
+    setIsModalUp(true);
   };
 
   const resetChallange = () => {
@@ -63,7 +85,7 @@ export const ChallangesProvider: React.FC<ReactNode> = ({ children }) => {
 
     const { amount } = activeChallange;
 
-    let finalXp = xp + amount;
+    let finalXp = currentExperience + amount;
     if (finalXp >= xpToNextLevel) {
       finalXp = finalXp - xpToNextLevel;
       levelUp();
@@ -74,11 +96,15 @@ export const ChallangesProvider: React.FC<ReactNode> = ({ children }) => {
     setChallangesCompletes(challangesCompleted + 1);
   };
 
+  const closeModal = () => {
+    setIsModalUp(false);
+  };
+
   return (
     <ChallangesContext.Provider
       value={{
         level,
-        xp,
+        currentExperience,
         xpToNextLevel,
         activeChallange,
         challangesCompleted,
@@ -86,9 +112,11 @@ export const ChallangesProvider: React.FC<ReactNode> = ({ children }) => {
         startNewChallange,
         resetChallange,
         completeChallange,
+        closeModal,
       }}
     >
       {children}
+      {isModalOpen && <LevelUpModal />}
     </ChallangesContext.Provider>
   );
 };
